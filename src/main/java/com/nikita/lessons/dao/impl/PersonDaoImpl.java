@@ -3,10 +3,10 @@ package com.nikita.lessons.dao.impl;
 import com.nikita.lessons.dao.PersonDao;
 import com.nikita.lessons.models.Person;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
-import java.sql.*;
 import java.util.List;
 
 @Component
@@ -26,63 +26,24 @@ public class PersonDaoImpl implements PersonDao {
     public static final String DELETE_PERSON_SQL = "DELETE FROM Person WHERE id = ?";
 
     public List<Person> getPeople() {
-
-        return jdbcTemplate.query(SELECT_PEOPLE_SQL, );
+        return jdbcTemplate.query(SELECT_PEOPLE_SQL, new BeanPropertyRowMapper<>(Person.class));
     }
 
     public Person getPerson(int id) {
-        Person person = new Person();
-        try(PreparedStatement preparedStatement = connection.prepareStatement(SELECT_PERSON_BY_ID_SQL)) {
-            preparedStatement.setInt(1, id);
-            try(ResultSet resultSet = preparedStatement.executeQuery()) {
-                resultSet.next();
-                person.setId(resultSet.getInt("id"));
-                person.setName(resultSet.getString("name"));
-                person.setAge(resultSet.getInt("age"));
-                person.setEmail(resultSet.getString("email"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return person;
+        return jdbcTemplate.query(SELECT_PERSON_BY_ID_SQL, new BeanPropertyRowMapper<>(Person.class), id)
+                .stream().findAny().orElse(null);
     }
 
     public void savePerson(Person person) {
-        try(PreparedStatement preparedStatement = connection.prepareStatement(INSERT_INTO_PERSON_SQL)) {
-            preparedStatement.setInt(1, person.getId());
-            preparedStatement.setString(2, person.getName());
-            preparedStatement.setInt(3, person.getAge());
-            preparedStatement.setString(4, person.getEmail());
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-
+        jdbcTemplate.update(INSERT_INTO_PERSON_SQL, person.getId(), person.getName(), person.getAge(), person.getEmail());
     }
 
     public void changePerson(int id, Person updatedPerson) {
-        try(PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_PERSON_SQL)) {
-
-            preparedStatement.setString(1, updatedPerson.getName());
-            preparedStatement.setInt(2, updatedPerson.getAge());
-            preparedStatement.setString(3, updatedPerson.getEmail());
-            preparedStatement.setInt(4, id);
-
-            preparedStatement.executeUpdate();
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        jdbcTemplate.update(UPDATE_PERSON_SQL,
+                updatedPerson.getName(), updatedPerson.getAge(), updatedPerson.getEmail(), id);
     }
 
     public void deletePerson(int id) {
-        try(PreparedStatement preparedStatement = connection.prepareStatement(DELETE_PERSON_SQL)) {
-            preparedStatement.setInt(1, id);
-            preparedStatement.executeUpdate();
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        jdbcTemplate.update(DELETE_PERSON_SQL, id);
     }
 }
