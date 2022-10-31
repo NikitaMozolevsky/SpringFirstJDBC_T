@@ -10,4 +10,6 @@ public interface PersonDao {
     void savePerson(Person person);
     void changePerson(int id, Person updatedPerson);
     void deletePerson(int id);
+    void testMultipleUpdate();
+    void testBatchUpdate();
 }
